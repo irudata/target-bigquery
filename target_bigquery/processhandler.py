@@ -37,6 +37,8 @@ class BaseProcessHandler(object):
         self.add_metadata_columns = kwargs.get("add_metadata_columns", True)
         self.validate_records = kwargs.get("validate_records", True)
         self.table_configs = kwargs.get("table_configs", {}) or {}
+        self.default_table_config = kwargs.get(
+            "default_table_config", {}) or {}
         self.INIT_STATE = kwargs.get("initial_state") or {}
         # PartialLoadJobProcessHandler kwargs
         self.max_cache = kwargs.get("max_cache", 1024 * 1024 * 50)
@@ -92,7 +94,10 @@ class BaseProcessHandler(object):
         schema = build_schema(schema=schema_simplified,
                               key_properties=msg.key_properties,
                               add_metadata=self.add_metadata_columns,
-                              force_fields=self.table_configs.get(msg.stream, {}).get("force_fields", {}))
+                              force_fields=dict(
+                                  **self.default_table_config.get("force_fields", {}),
+                                  **self.table_configs.get(msg.stream, {}).get("force_fields", {})
+                              ))
         self.bq_schema_dicts[msg.stream] = self._build_bq_schema_dict(schema)
         self.bq_schemas[msg.stream] = schema
 
@@ -240,7 +245,8 @@ class LoadJobProcessHandler(BaseProcessHandler):
                     dataset=self.dataset,
                     table_name=tmp_table_name,
                     table_schema=self.bq_schemas[stream],
-                    table_config=self.table_configs.get(stream, {}),
+                    table_config=dict(**self.default_table_config,
+                                      **self.table_configs.get(stream, {})),
                     # key_props=self.key_properties[stream],
                     # metadata_columns=self.add_metadata_columns,
                     truncate=True,
@@ -346,6 +352,7 @@ class LoadJobProcessHandler(BaseProcessHandler):
         """
         logger = self.logger
         partition_field = table_config.get("partition_field", None)
+        partition_by_ingestion_time = table_config.get("partition_by_ingestion_time", None)
         cluster_fields = table_config.get("cluster_fields", None)
         force_fields = table_config.get("force_fields", {})
 
@@ -357,7 +364,7 @@ class LoadJobProcessHandler(BaseProcessHandler):
         load_config.schema = table_schema
 
         # partitioning
-        if partition_field:
+        if partition_field or partition_by_ingestion_time:
             load_config.time_partitioning = bigquery.table.TimePartitioning(
                 type_=bigquery.table.TimePartitioningType.DAY,
                 field=partition_field

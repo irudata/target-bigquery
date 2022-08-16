@@ -89,6 +89,7 @@ def main():
     project_id, dataset_id = config["project_id"], config["dataset_id"]
 
     table_configs = tables.get("streams", {})
+    default_table_config = tables.get("default_table_config", {})
     max_cache = 1024 * 1024 * config.get("max_cache", 50)  # this is needed for partial loads
 
     tap_stream = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8")
@@ -126,6 +127,7 @@ def main():
             table_suffix=table_suffix,
             add_metadata_columns=add_metadata_columns,
             table_configs=table_configs,
+            default_table_config=default_table_config,
             max_cache=max_cache
         )
 

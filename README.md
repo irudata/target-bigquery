@@ -332,6 +332,19 @@ We can verify in BigQuery web UI that partitioning and clustering worked:
 
 <img src="readme_screenshots/13_Partitioned_and_Clustered_Table.png" width="650" alt="Download the service account credential JSON file">
 
+If we want to partition by the ingestion time, then we would have the config as follows:
+```
+{
+    "streams": {
+      "charges": {
+        "partition_by_ingestion_time": true,
+        "cluster_fields": ["type", "status", "customer_id", "transaction_id"]
+      }
+    }
+}
+```
+- Note: If both `partition_field` and `partition_by_ingestion_time=true` are specified, the table will be partitioned on the `partition_field`.
+
 **Example 2: [tap-exchangeratesapi] data**
 
 You can follow along and try this example on your own. We will continue where we left off in **Step 4: Install and Run**
@@ -424,6 +437,39 @@ You can only set up partitioning.
     }
 }
 ```
+
+### Default config for all tables
+
+- Instead of defining `partition_field`, `cluster_fields`, `force_fields` for each table, you can define defaults for these parameters for all tables using `default_table_config` key in the `target-tables-config` file.
+
+```
+{
+    "default_table_config": {
+        "force_fields": {
+          "date_start": {"type": "DATE", "mode":  "NULLABLE"},
+          "date_stop": {"type": "DATE", "mode":  "NULLABLE"}
+        }
+    }
+}
+```
+
+- Table specific config, when specified, will override the default_table_config.
+
+- e.g. in the following example, the resultant partition_field would be `data_stop` for the `ads_insights_age_and_gender` table, but for all other tables, it would be `date_start`.
+
+```
+{
+    "default_table_config": {
+        "partition_field": "date_start",
+    },
+    "streams": {
+      "ads_insights_age_and_gender": {
+        "partition_field": "date_stop"
+      }
+    }
+}
+```
+
 
 ## Unit tests set up
 
