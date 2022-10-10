@@ -404,7 +404,7 @@ def format_record_to_schema(record, bq_schema):
     """
 
     conversion_dict = {"BYTES": bytes,
-                       "STRING": json.dumps,
+                       "STRING": str,
                        "TIME": str,
                        "TIMESTAMP": str,
                        "DATE": str,
