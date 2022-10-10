@@ -2,6 +2,7 @@
 the purpose of this module is to convert JSON schema to BigQuery schema.
 """
 import re
+import json
 
 from target_bigquery.simplify_json_schema import BQ_DECIMAL_SCALE_MAX, BQ_BIGDECIMAL_SCALE_MAX, \
     BQ_DECIMAL_MAX_PRECISION_INCREMENT, BQ_BIGDECIMAL_MAX_PRECISION_INCREMENT
@@ -402,7 +403,7 @@ def format_record_to_schema(record, bq_schema):
     """
 
     conversion_dict = {"BYTES": bytes,
-                       "STRING": str,
+                       "STRING": json.dumps,
                        "TIME": str,
                        "TIMESTAMP": str,
                        "DATE": str,
